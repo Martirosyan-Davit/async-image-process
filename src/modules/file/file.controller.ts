@@ -8,25 +8,21 @@ import { FileService } from './file.service';
 
 @ApiController('files')
 export class FileController {
-  constructor(private fileService: FileService) {}
+  constructor(private readonly fileService: FileService) {}
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   @ApiOkResponse({
     type: ImagePayloadDto,
-    description: 'Upload image synchronously.',
+    description: 'Process image with worker threads (non-blocking)',
   })
-  process(@Body() createImageDto: CreateImageDto) {
-    return this.fileService.processImageByPrompt(createImageDto.prompt);
-  }
+  async process(
+    @Body() createImageDto: CreateImageDto,
+  ): Promise<ImagePayloadDto> {
+    const imagePath = await this.fileService.processImageByPrompt(
+      createImageDto.prompt,
+    );
 
-  @Post('async')
-  @HttpCode(HttpStatus.ACCEPTED)
-  @ApiOkResponse({
-    type: ImagePayloadDto,
-    description: 'Process image asynchronously with parallel workers.',
-  })
-  processAsync(@Body() createImageDto: CreateImageDto) {
-    return this.fileService.processImageByPromptAsync(createImageDto.prompt);
+    return { imagePath: imagePath || 'Processing failed' };
   }
 }
